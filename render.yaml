@@ -4,13 +4,5 @@ services:
     env: docker
     repo: https://github.com/sabnoor06/SWASTHIQ_SABNOORFATIMA
     branch: main
-    rootDir: backend
-    plan: free
-
-  - type: web
-    name: swasthiq-frontend
-    env: docker
-    repo: https://github.com/sabnoor06/SWASTHIQ_SABNOORFATIMA
-    branch: main
-    rootDir: frontend
+    rootDir: .
     plan: free

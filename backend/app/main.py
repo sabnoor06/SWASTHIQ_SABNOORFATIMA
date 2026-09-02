@@ -19,6 +19,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import Body, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from .analytics import analyse
 from .narrative import generate_narrative
@@ -136,3 +138,26 @@ def post_reconcile(payload: list = Body(...)) -> dict:
         "rejected_rows": [r.model_dump() for r in rejected],
         "accepted_row_count": len(records),
     }
+
+
+# --- Frontend Serving ---
+frontend_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+
+if frontend_dist.exists():
+    # Mount the Vite built assets directory
+    app.mount("/assets", StaticFiles(directory=frontend_dist / "assets"), name="assets")
+
+    # Catch-all route to serve the React application (for React Router)
+    @app.get("/{catchall:path}")
+    def serve_react_app(catchall: str):
+        # Exclude paths that are meant to be API endpoints or documentation
+        if catchall.startswith("api/") or catchall in ["health", "docs", "openapi.json", "redoc"]:
+            raise HTTPException(status_code=404, detail="Not Found")
+            
+        index_path = frontend_dist / "index.html"
+        if index_path.exists():
+            return FileResponse(index_path)
+            
+        # Fallback if index.html is missing
+        raise HTTPException(status_code=404, detail="Frontend build not found.")
+
